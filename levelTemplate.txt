@@ -1,0 +1,11 @@
+laser beam position x,y
+# of targets
+target x,y
+...
+# blockers
+blocker x,y
+...
+# of left mirrors
+# of right mirrors
+# of horizontal splitters
+# of vertical splitters
