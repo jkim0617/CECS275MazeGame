@@ -14,7 +14,6 @@ string menu()
       playerData = handleContinue();
       if (playerData != "")
       {
-        cout << "succes" << endl;
         return playerData;
       }
       break;
@@ -22,7 +21,6 @@ string menu()
       playerData = handleNewGame();
       if (playerData != "")
       {
-        cout << "succes" << endl;
         return playerData;
       }
       break;
@@ -39,24 +37,36 @@ string menu()
 
 void displayMainMenu()
 {
-  cout << "*-------------------*" << endl;
-  cout << "*     Main Menu     *" << endl;
-  cout << "*  1. Continue      *" << endl;
-  cout << "*  2. New Game      *" << endl;
-  cout << "*  3. Exit          *" << endl;
-  cout << "*-------------------*" << endl;
+  ofstream gameBoard;
+  gameBoard.open("game.txt");
+  gameBoard << "*-------------------*" << endl;
+  gameBoard << "*     Main Menu     *" << endl;
+  gameBoard << "*  1. Continue      *" << endl;
+  gameBoard << "*  2. New Game      *" << endl;
+  gameBoard << "*  3. Exit          *" << endl;
+  gameBoard << "*-------------------*" << endl;
+  gameBoard.close();
+  cout << "Entry: ";
 }
 
 string handleContinue()
 {
   // setup variables
   ifstream dataList("playerList.txt"); // read file
+  ofstream gameBoard("game.txt");      // display file
   string playerData;                   // write file
   string username;                     // username string
   string password;                     // password string
   bool usernameFound = false;          // returns true if username exists
 
-  cout << "Enter your username: ";
+  gameBoard << "*-------------------*" << endl;
+  gameBoard << "*                   *" << endl;
+  gameBoard << "*    Enter your     *" << endl;
+  gameBoard << "*    username       *" << endl;
+  gameBoard << "*                   *" << endl;
+  gameBoard << "*-------------------*" << endl;
+  gameBoard.close();
+  cout << "Entry: ";
   cin >> username;
   while (dataList >> playerData)
   {
@@ -73,12 +83,20 @@ string handleContinue()
   dataList.close();
   if (!usernameFound)
   {
-    cout << "Username not found" << endl;
-    throw;
+    cout << "USERNAME NOT FOUND" << endl;
+    menu();
   }
   while (1)
   {
-    cout << "Enter your password: ";
+    ofstream gameBoard("game.txt"); // display file
+    gameBoard << "*-------------------*" << endl;
+    gameBoard << "*                   *" << endl;
+    gameBoard << "*    Enter your     *" << endl;
+    gameBoard << "*    password       *" << endl;
+    gameBoard << "*                   *" << endl;
+    gameBoard << "*-------------------*" << endl;
+    gameBoard.close();
+    cout << "Entry: ";
     cin >> password;
     int firstComma = playerData.find(',');
     int secondComma = playerData.find(',', firstComma + 1);

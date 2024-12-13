@@ -1,36 +1,49 @@
 #include "Game.h"
 
-void Game::handleGame()
+Player Game::handleGame(Player player)
 {
-  int level = 1;            // temporary level set
+  // setup player things
+  levelSuccess = false; // check if level success
+  lives = player.getLives();
+  level = player.getLevel();
   string board[7][7];       // set up board array
-  boardInit(board, 1);      // initialize the board to the level
+  boardInit(board, level);  // initialize the board to the level
   generateBoard(board, -1); // display board with default menu option default
-  while (1)
+  int menuInput = -1;
+  while (!levelSuccess)
   {
-    int menuInput = handleInput();   // input to change the menu
-    generateBoard(board, menuInput); // change the menu to proper menu option
+    menuInput = handleInput(); // input to change the menu
     handleMenuInput(menuInput, board);
-    /*
-      menuinput = 1;
-      menu: left mirror or right mirror, prompt user to choose 1 or 2
-      insert function here to handle different cases
-    */
-    /*
-      Order of game:
-      get level and player lives (FIX ME:implement after the rest of logic is finished)
-      initialize game
-        initialize array (DONE)
-        fill array with boardinit function(DONE)
-        display board and first menu with generate board function (DONE)
-      loop while game is on
-        take a menu input (DONE)
-        regen board with updated menu input, prompt for change
-        once change set, regen board with changes
-        set menu option back to 1
-    */
     generateBoard(board, -1);
+    if (menuInput == 7)
+    {
+      return player;
+    }
   }
+  if (player.getLevel() < 7)
+  {
+    generateBoard(board, 1); // display win menu
+    menuInput = handleInput();
+    int lvl = player.getLevel();
+    lvl++;
+    player.setLevel(lvl);
+    while (menuInput == 1 || menuInput == 2)
+    {
+      switch (menuInput)
+      {
+      case 1:
+        handleGame(player);
+        return player;
+        break;
+      case 2:
+        break;
+      default:
+        cout << "INVALID INPUT" << endl;
+        break;
+      }
+    }
+  }
+  return player;
 }
 
 void Game::handleMenuInput(int menuOption, string arr[7][7])
@@ -38,40 +51,228 @@ void Game::handleMenuInput(int menuOption, string arr[7][7])
   switch (menuOption)
   {
   case 1:
-    handleMirrors(arr);
+    if (pieces.lMirror == 0)
+    {
+      cout << "NO MORE PIECES" << endl;
+      return;
+    }
     break;
   case 2:
-    // handle splitters
+    if (pieces.rMirror == 0)
+    {
+      cout << "NO MORE PIECES" << endl;
+      return;
+    }
     break;
   case 3:
-    // handle go
+    if (pieces.hSplitter == 0)
+    {
+      cout << "NO MORE PIECES" << endl;
+      return;
+    }
     break;
   case 4:
-    // handle restart
+    if (pieces.vSplitter == 0)
+    {
+      cout << "NO MORE PIECES" << endl;
+      return;
+    }
     break;
   default:
-    // handle improper input
+    break;
+  }
+  int col, row;
+  if (menuOption < 5)
+  {
+    generateBoard(arr, 101);
+    row = handleInput() - 1;
+    generateBoard(arr, 102);
+    col = handleInput() - 1;
+    if (arr[col][row] != ".")
+    {
+      cout << "PIECE BLOCKED" << endl; // FIX ME: maybe change to display errors on board?
+      return;
+    }
+  }
+  switch (menuOption)
+  {
+  case 1:
+    arr[col][row] = "\\";
+    pieces.lMirror--;
+    break;
+  case 2:
+    arr[col][row] = "/";
+    pieces.rMirror--;
+    break;
+  case 3:
+    arr[col][row] = "_";
+    pieces.hSplitter--;
+    break;
+  case 4:
+    arr[col][row] = "|";
+    pieces.vSplitter--;
+    break;
+  case 5:
+    handleGo(arr);
+    break;
+  case 6:
+    handleRestart(arr);
+    break;
+  case 7:
+    break;
+  default:
+    cout << "INVALID INPUT" << endl;
+    return;
     break;
   }
 }
 
-void Game::handleMirrors(string arr[7][7])
+void Game::handleGo(string arr[7][7])
 {
-  int input;
-  input = handleInput();
-  generateBoard(arr, 101);
-  int row = handleInput();
-  generateBoard(arr, 102);
-  int col = handleInput();
-  switch (input)
+  int beamX, beamY;
+  for (int y = 0; y < 7; y++)
   {
-  case 1:
-    arr[col][row] = "\\";
-    break;
-  case 2:
-    arr[col][row] = "/";
-    break;
+    for (int x = 0; x < 7; x++)
+    {
+      if (arr[y][x] == "b")
+      {
+        beamX = x;
+        beamY = y;
+      }
+    }
   }
+  handleMove(beamX, beamY, Direction::Up, arr);
+  handleMove(beamX, beamY, Direction::Down, arr);
+  handleMove(beamX, beamY, Direction::Left, arr);
+  handleMove(beamX, beamY, Direction::Right, arr);
+  if (checkWin(arr))
+  {
+    levelSuccess = true;
+  }
+  generateBoard(arr, -1);
+}
+
+bool Game::checkWin(string arr[7][7])
+{
+  for (int y = 0; y < 7; y++)
+  {
+    for (int x = 0; x < 7; x++)
+    {
+      if (arr[y][x] == "o")
+      {
+        int tX = x;
+        int tY = y;
+        if (!hitTarget(arr, tX, tY))
+        {
+          return false;
+        }
+      }
+    }
+  }
+  return true;
+}
+
+bool Game::hitTarget(string arr[7][7], int tX, int tY)
+{
+  if (tY > 0 && arr[tY - 1][tX] == "V")
+  {
+    return true;
+  }
+  else if (tY < 7 && arr[tY + 1][tX] == "^")
+  {
+    return true;
+  }
+  else if (tX > 0 && arr[tY][tX - 1] == ">")
+  {
+    return true;
+  }
+  else if (tX < 7 && arr[tY][tX + 1] == "<")
+  {
+    return true;
+  }
+  else
+  {
+    return false;
+  }
+}
+
+void Game::handleMove(int xStart, int yStart, Direction dir, string arr[7][7])
+{
+  int nextX = xStart;
+  int nextY = yStart;
+  Direction direction = dir;
+  while (1)
+  {
+    switch (direction)
+    {
+    case Direction::Up:
+      --nextY;
+      break;
+    case Direction::Down:
+      ++nextY;
+      break;
+    case Direction::Left:
+      --nextX;
+      break;
+    case Direction::Right:
+      ++nextX;
+      break;
+    }
+    string nextTile = arr[nextY][nextX];
+    if (nextTile == "#" || nextTile == "o" || nextX < 0 || nextX > 6 || nextY < 0 || nextX > 6) // hit wall
+    {
+      // if (nextTile == "o")
+      // {
+      //   level++;
+      // }
+      break;
+    }
+    else if (nextTile == "/")
+    {
+      direction = (direction == Direction::Up)     ? Direction::Right
+                  : (direction == Direction::Down) ? Direction::Left
+                  : (direction == Direction::Left) ? Direction::Down
+                                                   : Direction::Up;
+    }
+    else if (nextTile == "\\")
+    {
+      direction = (direction == Direction::Up)     ? Direction::Left
+                  : (direction == Direction::Down) ? Direction::Right
+                  : (direction == Direction::Left) ? Direction::Up
+                                                   : Direction::Down;
+    }
+    else if (nextTile == "_")
+    {
+      if (direction == Direction::Up || direction == Direction::Down)
+      {
+        handleMove(nextX, nextY, Direction::Left, arr);
+        handleMove(nextX, nextY, Direction::Right, arr);
+      }
+      break;
+    }
+    else if (nextTile == "|")
+    {
+      if (direction == Direction::Left || direction == Direction::Right)
+      {
+        handleMove(nextX, nextY, Direction::Up, arr);
+        handleMove(nextX, nextY, Direction::Down, arr);
+      }
+      break;
+    }
+    else
+    {
+      arr[nextY][nextX] = (direction == Direction::Up)     ? "^"
+                          : (direction == Direction::Down) ? "V"
+                          : (direction == Direction::Left) ? "<"
+                                                           : ">";
+    }
+  }
+}
+
+void Game::handleRestart(string arr[7][7])
+{
+  boardInit(arr, 1);
+  generateBoard(arr, -1);
 }
 
 int Game::handleInput()
@@ -89,8 +290,8 @@ void Game::boardInit(string arr[7][7], int level) // fills the array with config
   int iter;
   int xPos;
   int yPos;
-  string lvlFile = "level" + to_string(level) + ".txt"; // convert level into file format
-  lvlTemplate.open(lvlFile);                            // open file
+  string lvlFile = "levels/level" + to_string(level) + ".txt"; // convert level into file format
+  lvlTemplate.open(lvlFile);                                   // open file
 
   // fill empty space
   for (int i = 0; i < 7; i++)
@@ -103,8 +304,8 @@ void Game::boardInit(string arr[7][7], int level) // fills the array with config
 
   // set laser pos
   getline(lvlTemplate, input);
-  xPos = stoi(input.substr(0, 1));
-  yPos = stoi(input.substr(2, 1));
+  xPos = stoi(input.substr(0, 1)) - 1;
+  yPos = stoi(input.substr(2, 1)) - 1;
   arr[yPos][xPos] = "b";
 
   // set target pos
@@ -113,8 +314,8 @@ void Game::boardInit(string arr[7][7], int level) // fills the array with config
   for (int i = 0; i < iter; i++)
   {
     getline(lvlTemplate, input);
-    xPos = stoi(input.substr(0, 1));
-    yPos = stoi(input.substr(2, 1));
+    xPos = stoi(input.substr(0, 1)) - 1;
+    yPos = stoi(input.substr(2, 1)) - 1;
     arr[yPos][xPos] = "o";
   }
 
@@ -124,8 +325,8 @@ void Game::boardInit(string arr[7][7], int level) // fills the array with config
   for (int i = 0; i < iter; i++)
   {
     getline(lvlTemplate, input);
-    xPos = stoi(input.substr(0, 1));
-    yPos = stoi(input.substr(2, 1));
+    xPos = stoi(input.substr(0, 1)) - 1;
+    yPos = stoi(input.substr(2, 1)) - 1;
     arr[yPos][xPos] = "#";
   }
 
@@ -147,9 +348,10 @@ void Game::generateBoard(string arr[7][7], int menuOption) // displays to text f
   ofstream gameBoard;
 
   gameBoard.open("game.txt");
-  for (int y = 0; y < 9; y++)
+  gameBoard << "LEVEL: " << level << endl;
+  for (int y = 0; y < 10; y++)
   {
-    for (int x = 1; x < 18; x += 2)
+    for (int x = 0; x < 20; x += 2)
     {
       gameBoard << genChar(x / 2, y, arr);
       gameBoard << " ";
@@ -165,35 +367,44 @@ string Game::controlMenu(int type)
 {
   switch (type)
   {
-  case 1:
-    return ("Controls:\n1. Left Mirror (\\)\n2. Right Mirror (/)\n3. Exit");
-    break;
   case 101:
     return ("Controls:\nEnter a row (1-6)");
     break;
   case 102:
     return ("Controls:\nEnter a column (1-6)");
     break;
+  case 1:
+    return ("YOU WIN:\n1. Next Level\n2. Exit\n");
+    break;
   default:
-    return ("Controls:\n1. (\\): " + to_string(pieces.lMirror) + "\n2. (/): " + to_string(pieces.rMirror) + "\n3. (_): " + to_string(pieces.hSplitter) + "\n4. (|): " + to_string(pieces.vSplitter) + "\n5. Go\n6. Reset\n");
+    return ("Controls:\n1. (\\): " + to_string(pieces.lMirror) + "\n2. (/): " + to_string(pieces.rMirror) + "\n3. (_): " + to_string(pieces.hSplitter) + "\n4. (|): " + to_string(pieces.vSplitter) + "\n5. Go\n6. Restart\n7. Exit\n");
     break;
   }
 }
 
 string Game::genChar(int x, int y, string arr[7][7])
 {
+  // coor display
+  if (y == 0)
+  {
+    return ((x > 1 && x < 9) ? to_string(x - 1) : " ");
+  }
+  else if (x == 0)
+  {
+    return ((y > 1 && y < 9) ? to_string(y - 1) : " ");
+  }
   // walls
-  if (y == 0 || y == 8)
+  else if (y == 1 || y == 9)
   {
     return "#";
   }
-  else if (x == 0 || x == 8)
+  else if (x == 1 || x == 9)
   {
     return "#";
   }
   // game
   else
   {
-    return arr[y - 1][x - 1];
+    return arr[y - 2][x - 2];
   }
 }

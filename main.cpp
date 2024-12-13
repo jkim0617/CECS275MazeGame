@@ -5,11 +5,12 @@
 
 int main()
 {
-  // Player player(menu());
-  // player.displayPlayerData();
-  // player.savePlayerData();
+  Player player(menu());
+  player.displayPlayerData();
   Game game;
-  game.handleGame();
+  player = game.handleGame(player);
+  player.displayPlayerData();
+  player.savePlayerData();
   return 0;
 }
 

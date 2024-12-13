@@ -5,9 +5,10 @@ Player::Player(string playerData)
   username = playerData.substr(0, playerData.find(","));
   int firstComma = playerData.find(',');
   int secondComma = playerData.find(',', firstComma + 1);
-  password = playerData.substr(firstComma + 1, secondComma - firstComma - 1);
-  lives = 3;
-  level = 1;
+  int commaIndex = secondComma - firstComma - 1;
+  password = playerData.substr(firstComma + 1, commaIndex);
+  lives = stoi(playerData.substr(secondComma + 1, 1));
+  level = stoi(playerData.substr(secondComma + 3, 1));
 }
 
 void Player::displayPlayerData()
