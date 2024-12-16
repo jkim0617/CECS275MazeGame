@@ -5,35 +5,17 @@
 
 int main()
 {
-  Player player(menu());
-  player.displayPlayerData();
-  Game game;
-  player = game.handleGame(player);
-  player.displayPlayerData();
-  player.savePlayerData();
+  Player player(menu());            // create player from menu input
+  Game game;                        // create game object
+  player = game.handleGame(player); // start game, update player when finished
+  if (player.getLives() == 0)       // out of lives, dead player
+  {
+    player.setPassword("DEADPLAYER" + player.getUsername() + player.getPassword());
+  }
+  if (player.getLevel() == 100) // player wins
+  {
+    player.setPassword("WINNERWINNERCHICKENDINNER" + player.getUsername() + player.getPassword());
+  }
+  player.savePlayerData(); // save to database
   return 0;
 }
-
-/*
-  I. menu creation (using classes)
-    display the menu
-    create a new player data if new user
-    or
-    retrieve player data from text file if returning user
-  II. player data
-    store and retrieve player data
-  III. display game (easiest, file manipulation, using fstream)
-    generate the 6 levels on text file
-    display levels individually
-      copy the game level onto new textfile
-    setting up the input menu
-    displaying objects depending on menu
-    game control/menu
-      1. place object
-        a. select object
-        b. select location
-      2. test formation (will be for game logic person)
-      3. reset
-  IV. game logic (using fstream, based on marble drop)
-    tbd
-*/

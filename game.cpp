@@ -1,6 +1,6 @@
 #include "Game.h"
 
-Player Game::handleGame(Player player)
+Player Game::handleGame(Player player) // handles the entire game
 {
   // setup player things
   levelSuccess = false; // check if level success
@@ -9,24 +9,32 @@ Player Game::handleGame(Player player)
   string board[7][7];       // set up board array
   boardInit(board, level);  // initialize the board to the level
   generateBoard(board, -1); // display board with default menu option default
-  int menuInput = -1;
+  int menuInput = -1;       // sets first menu input to default
   while (!levelSuccess)
   {
     menuInput = handleInput(); // input to change the menu
     handleMenuInput(menuInput, board);
-    generateBoard(board, -1);
-    if (menuInput == 7)
+    generateBoard(board, -1); // display
+    player.setLives(lives);   // update lives
+    if (lives == 0)
+    {
+      generateBoard(board, 2); // display gameover menu
+      return player;
+    }
+    if (menuInput == 7) // display winner
     {
       return player;
     }
   }
-  if (player.getLevel() < 7)
+  if (player.getLevel() < 6) // while the level is within 1-6
   {
     generateBoard(board, 1); // display win menu
     menuInput = handleInput();
+    // update level
     int lvl = player.getLevel();
     lvl++;
     player.setLevel(lvl);
+    // menu after level completed
     while (menuInput == 1 || menuInput == 2)
     {
       switch (menuInput)
@@ -42,6 +50,13 @@ Player Game::handleGame(Player player)
         break;
       }
     }
+  }
+  else
+  {
+    // winner handler
+    generateBoard(board, 99);
+    menuInput = handleInput();
+    player.setLevel(100);
   }
   return player;
 }
@@ -141,11 +156,11 @@ void Game::handleGo(string arr[7][7])
       }
     }
   }
-  handleMove(beamX, beamY, Direction::Up, arr);
-  handleMove(beamX, beamY, Direction::Down, arr);
-  handleMove(beamX, beamY, Direction::Left, arr);
-  handleMove(beamX, beamY, Direction::Right, arr);
-  if (checkWin(arr))
+  handleMove(beamX, beamY, Direction::Up, arr);    // upward laser
+  handleMove(beamX, beamY, Direction::Down, arr);  // downward laser
+  handleMove(beamX, beamY, Direction::Left, arr);  // left laser
+  handleMove(beamX, beamY, Direction::Right, arr); // right laser
+  if (checkWin(arr))                               // update whether level is completed
   {
     levelSuccess = true;
   }
@@ -154,6 +169,7 @@ void Game::handleGo(string arr[7][7])
 
 bool Game::checkWin(string arr[7][7])
 {
+  // loop through board array and find target position
   for (int y = 0; y < 7; y++)
   {
     for (int x = 0; x < 7; x++)
@@ -164,6 +180,7 @@ bool Game::checkWin(string arr[7][7])
         int tY = y;
         if (!hitTarget(arr, tX, tY))
         {
+          lives--;
           return false;
         }
       }
@@ -219,12 +236,8 @@ void Game::handleMove(int xStart, int yStart, Direction dir, string arr[7][7])
       break;
     }
     string nextTile = arr[nextY][nextX];
-    if (nextTile == "#" || nextTile == "o" || nextX < 0 || nextX > 6 || nextY < 0 || nextX > 6) // hit wall
+    if (nextTile == "#" || nextTile == "o" || nextX < 0 || nextX > 6 || nextY < 0 || nextY > 6) // hit wall
     {
-      // if (nextTile == "o")
-      // {
-      //   level++;
-      // }
       break;
     }
     else if (nextTile == "/")
@@ -271,7 +284,7 @@ void Game::handleMove(int xStart, int yStart, Direction dir, string arr[7][7])
 
 void Game::handleRestart(string arr[7][7])
 {
-  boardInit(arr, 1);
+  boardInit(arr, level);
   generateBoard(arr, -1);
 }
 
@@ -358,6 +371,11 @@ void Game::generateBoard(string arr[7][7], int menuOption) // displays to text f
     }
     gameBoard << endl;
   }
+  gameBoard << "\n\nLives: ";
+  for (int i = 0; i < lives - 1; i++)
+  {
+    gameBoard << "O ";
+  }
   gameBoard << "\n\n"
             << controlMenu(menuOption);
   gameBoard.close();
@@ -375,6 +393,12 @@ string Game::controlMenu(int type)
     break;
   case 1:
     return ("YOU WIN:\n1. Next Level\n2. Exit\n");
+    break;
+  case 2:
+    return ("OUT OF LIVES\nGAME OVER");
+    break;
+  case 99:
+    return ("WINNER WINNER CHICKEN DINNER\nEnter any key to exit");
     break;
   default:
     return ("Controls:\n1. (\\): " + to_string(pieces.lMirror) + "\n2. (/): " + to_string(pieces.rMirror) + "\n3. (_): " + to_string(pieces.hSplitter) + "\n4. (|): " + to_string(pieces.vSplitter) + "\n5. Go\n6. Restart\n7. Exit\n");

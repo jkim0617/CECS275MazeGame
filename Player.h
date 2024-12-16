@@ -11,10 +11,10 @@ using namespace std;
 class Player
 {
 private:
-  string username;
-  string password;
-  int lives;
-  int level;
+  string username; // player username
+  string password; // player password
+  int lives;       // player lives
+  int level;       // player level
 
 public:
   // default constructor
@@ -27,7 +27,6 @@ public:
   }
   // overload constructor
   Player(string playerData);
-  // ~Player(); // deconstructor
 
   string getUsername() const { return username; }
   /*
@@ -70,7 +69,13 @@ public:
     @param m_lives new lives
   */
   void displayPlayerData();
+  /*
+    displays player data in username, password, lives, level format
+  */
   void savePlayerData();
+  /*
+    saves player data to database txt file
+  */
 };
 
 #endif
